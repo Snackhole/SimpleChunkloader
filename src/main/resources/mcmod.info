@@ -1,0 +1,16 @@
+[
+{
+  "modid": "simplechunkloader",
+  "name": "Simple Chunkloader",
+  "description": "Simple chunkloading with commands.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Snackhole"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
