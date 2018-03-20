@@ -5,6 +5,7 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -53,18 +54,18 @@ public class CommandChunkload implements ICommand {
             for (String nickname : ticketsMap.keySet()) {
                 ticketMessage += nickname + "; ";
             }
-            ticketMessage = ticketMessage.trim();
-            if (ticketMessage.endsWith(":")) {
-                ticketMessage += " None";
+            if (ticketMessage.endsWith(":  ")) {
+                ticketMessage += " None; ";
             }
+            ticketMessage += "maximum chunks per ticket:  " + ForgeChunkManager.getMaxChunkDepthFor(SimpleChunkloaderMain.MODID) + "; tickets remaining:  " + (ForgeChunkManager.getMaxTicketLengthFor(SimpleChunkloaderMain.MODID) - SimpleChunkloaderMain.chunkloadManager.getTicketsMap().size());
             player.sendMessage(new TextComponentString(ticketMessage));
         } else if (args.length == 1) {
             ForgeChunkManager.Ticket ticket = ticketsMap.get(args[0]);
-            String ticketMessage = args[0] + " chunks:  ";
-            for (ChunkPos chunkPos : ticket.getChunkList()) {
-                ticketMessage += chunkPos.toString() + "; ";
-            }
-            ticketMessage = ticketMessage.trim();
+            NBTTagCompound ticketData = ticket.getModData();
+            int chunkPosX = ticketData.getInteger("chunkPosX");
+            int chunkPosZ = ticketData.getInteger("chunkPosZ");
+            ChunkPos centerChunkPos = new ChunkPos(chunkPosX, chunkPosZ);
+            String ticketMessage = args[0] + ":  Chunk " + centerChunkPos.toString() + "; radius " + ticketData.getInteger("radius") + "; dimension " + ticket.world.provider.getDimension() + "; total chunks " + ticket.getChunkList().size() + ".";
             player.sendMessage(new TextComponentString(ticketMessage));
         } else if (args.length == 2) {
             if (args[1].equals("release")) {
@@ -72,7 +73,7 @@ public class CommandChunkload implements ICommand {
                 player.sendMessage(new TextComponentString(args[0] + " released!"));
             } else {
                 SimpleChunkloaderMain.chunkloadManager.requestTicketAndForceChunks(args[0], new ChunkPos(player.getPosition()), Integer.parseInt(args[1]), player.world, ForgeChunkManager.Type.NORMAL);
-                player.sendMessage(new TextComponentString(args[0] + " loaded!"));
+                player.sendMessage(new TextComponentString(args[0] + " loaded!  " + ticketsMap.get(args[0]).getChunkList().size() + " chunks."));
             }
         }
     }
