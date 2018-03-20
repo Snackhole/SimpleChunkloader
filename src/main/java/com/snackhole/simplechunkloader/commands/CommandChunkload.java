@@ -1,6 +1,7 @@
 package com.snackhole.simplechunkloader.commands;
 
 import com.snackhole.simplechunkloader.SimpleChunkloaderMain;
+import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class CommandChunkload implements ICommand {
+public class CommandChunkload extends CommandBase {
     private final List commandChunkloadAliases;
 
     public CommandChunkload() {
@@ -33,7 +34,7 @@ public class CommandChunkload implements ICommand {
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return "\"/chunkload\" or \"/chunk\" displays a list of existing chunkload tickets by nickname.  Add a nickname to get a list of chunks in the ticket.  Add to the nickname a radius between 0 and 2 to create a new ticket loading chunks in that radius around the chunk you're in, or add \"release\" to release an existing ticket.";
+        return "\"/chunkload\" or \"/chunk\" displays a list of existing chunkload tickets by nickname, plus chunkloading limits.  If a nickname already exists, you can add it to the command to get information about it; further add \"release\" to release its chunks and the name.  If a nickname doesn't exist, add it to the command followed by a radius between 0 and 2 to create a new ticket loading chunks in that radius around the chunk you're in.";
     }
 
     @Override
@@ -81,21 +82,6 @@ public class CommandChunkload implements ICommand {
     @Override
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
         return sender instanceof EntityPlayerMP;
-    }
-
-    @Override
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
-        return null;
-    }
-
-    @Override
-    public boolean isUsernameIndex(String[] args, int index) {
-        return false;
-    }
-
-    @Override
-    public int compareTo(ICommand o) {
-        return 0;
     }
 
     private boolean validArgs(String[] args) {
