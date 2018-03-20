@@ -45,8 +45,7 @@ public class CommandChunkload extends CommandBase {
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         EntityPlayerMP player = (EntityPlayerMP) sender.getCommandSenderEntity();
-        if (!validArgs(args)) {
-            player.sendMessage(new TextComponentString("Invalid command!  Use \"/help chunkload\" to see usage information."));
+        if (!validArgs(args, player)) {
             return;
         }
         HashMap<String, ForgeChunkManager.Ticket> ticketsMap = SimpleChunkloaderMain.chunkloadManager.getTicketsMap();
@@ -84,31 +83,37 @@ public class CommandChunkload extends CommandBase {
         return sender instanceof EntityPlayerMP;
     }
 
-    private boolean validArgs(String[] args) {
+    private boolean validArgs(String[] args, EntityPlayerMP player) {
         if (args.length > 2) {
+            player.sendMessage(new TextComponentString("Too many arguments!"));
             return false;
         }
         if (args.length == 1) {
             if (!SimpleChunkloaderMain.chunkloadManager.getTicketsMap().containsKey(args[0])) {
+                player.sendMessage(new TextComponentString("No ticket exists with that nickname!"));
                 return false;
             }
         }
         if (args.length == 2) {
             if (args[1].equals("release")) {
                 if (!SimpleChunkloaderMain.chunkloadManager.getTicketsMap().containsKey(args[0])) {
+                    player.sendMessage(new TextComponentString("No ticket exists with that nickname!"));
                     return false;
                 }
             } else {
                 if (SimpleChunkloaderMain.chunkloadManager.getTicketsMap().containsKey(args[0])) {
+                    player.sendMessage(new TextComponentString("A ticket with that nickname already exists!"));
                     return false;
                 }
                 int radius = -1;
                 try {
                     radius = Integer.parseInt(args[1]);
                 } catch (NumberFormatException exception) {
+                    player.sendMessage(new TextComponentString("Radius must be an integer!"));
                     return false;
                 }
                 if (radius < 0 || radius > 2) {
+                    player.sendMessage(new TextComponentString("Radius must be between 0 and 2!"));
                     return false;
                 }
             }
