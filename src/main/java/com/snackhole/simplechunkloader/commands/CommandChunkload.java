@@ -1,19 +1,24 @@
 package com.snackhole.simplechunkloader.commands;
 
+import com.snackhole.simplechunkloader.SimpleChunkloaderMain;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.common.ForgeChunkManager;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class CommandChunkload implements ICommand {
     private final List commandChunkloadAliases;
+
     public CommandChunkload() {
         commandChunkloadAliases = new ArrayList();
         commandChunkloadAliases.add("chunkload");
@@ -27,7 +32,7 @@ public class CommandChunkload implements ICommand {
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return "\"/chunkload\" or \"/chunk\" displays a list of existing chunkload tickets by nickname.  Add a nickname and a radius between 0 and 2 to load chunks in that radius around the chunk you're in.  Add \"delete\" instead of a radius to delete an existing ticket.  Nicknames must be unbroken strings, with no spaces, but try to be descriptive so you know where the chunks in question are.";
+        return "\"/chunkload\" or \"/chunk\" displays a list of existing chunkload tickets by nickname.  Add a nickname to get a list of chunks in the ticket.  Add to the nickname a radius between 0 and 2 to create a new ticket loading chunks in that radius around the chunk you're in, or add \"release\" to release an existing ticket.";
     }
 
     @Override
@@ -42,10 +47,33 @@ public class CommandChunkload implements ICommand {
             player.sendMessage(new TextComponentString("Invalid command!  Use \"/help chunkload\" to see usage information."));
             return;
         }
-        if (args.length == 0){
-            player.sendMessage(new TextComponentString("Current chunkload tickets:  ")); // Get list of tickets from chunkload manager.
+        HashMap<String, ForgeChunkManager.Ticket> ticketsMap = SimpleChunkloaderMain.chunkloadManager.getTicketsMap();
+        if (args.length == 0) {
+            String ticketMessage = "Chunkload tickets:  ";
+            for (String nickname : ticketsMap.keySet()) {
+                ticketMessage += nickname + "; ";
+            }
+            ticketMessage = ticketMessage.trim();
+            if (ticketMessage.endsWith(":")) {
+                ticketMessage += " None";
+            }
+            player.sendMessage(new TextComponentString(ticketMessage));
+        } else if (args.length == 1) {
+            ForgeChunkManager.Ticket ticket = ticketsMap.get(args[0]);
+            String ticketMessage = args[0] + " chunks:  ";
+            for (ChunkPos chunkPos : ticket.getChunkList()) {
+                ticketMessage += chunkPos.toString() + "; ";
+            }
+            ticketMessage = ticketMessage.trim();
+            player.sendMessage(new TextComponentString(ticketMessage));
         } else if (args.length == 2) {
-            // Check whether nickname already exists.  If user is trying to delete, proceed only if nickname exists.  If user is trying to add, proceed only if nickname doesn't exist.
+            if (args[1].equals("release")) {
+                SimpleChunkloaderMain.chunkloadManager.releaseTicket(args[0]);
+                player.sendMessage(new TextComponentString(args[0] + " released!"));
+            } else {
+                SimpleChunkloaderMain.chunkloadManager.requestTicketAndForceChunks(args[0], new ChunkPos(player.getPosition()), Integer.parseInt(args[1]), player.world, ForgeChunkManager.Type.NORMAL);
+                player.sendMessage(new TextComponentString(args[0] + " loaded!"));
+            }
         }
     }
 
@@ -74,11 +102,28 @@ public class CommandChunkload implements ICommand {
             return false;
         }
         if (args.length == 1) {
-            return false;
-        }
-        if (args.length == 2){
-            if (!args[1].equals("0") && !args[1].equals("1") && !args[1].equals("2") && !args[1].equals("delete")){
+            if (!SimpleChunkloaderMain.chunkloadManager.getTicketsMap().containsKey(args[0])) {
                 return false;
+            }
+        }
+        if (args.length == 2) {
+            if (args[1].equals("release")) {
+                if (!SimpleChunkloaderMain.chunkloadManager.getTicketsMap().containsKey(args[0])) {
+                    return false;
+                }
+            } else {
+                if (SimpleChunkloaderMain.chunkloadManager.getTicketsMap().containsKey(args[0])) {
+                    return false;
+                }
+                int radius = -1;
+                try {
+                    radius = Integer.parseInt(args[1]);
+                } catch (NumberFormatException exception) {
+                    return false;
+                }
+                if (radius < 0 || radius > 2) {
+                    return false;
+                }
             }
         }
         return true;

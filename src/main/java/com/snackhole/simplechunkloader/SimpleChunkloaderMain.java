@@ -1,7 +1,9 @@
 package com.snackhole.simplechunkloader;
 
+import com.snackhole.simplechunkloader.chunkloading.ChunkloadManager;
 import com.snackhole.simplechunkloader.commands.CommandChunkload;
 import com.snackhole.simplechunkloader.proxy.IProxy;
+import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -17,9 +19,12 @@ public class SimpleChunkloaderMain {
     public static IProxy proxy;
     @Mod.Instance
     public static SimpleChunkloaderMain simpleChunkloaderMainInstance;
+    public static ChunkloadManager chunkloadManager;
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        chunkloadManager = new ChunkloadManager();
+        ForgeChunkManager.setForcedChunkLoadingCallback(simpleChunkloaderMainInstance, chunkloadManager);
         proxy.preInit(event);
     }
 
