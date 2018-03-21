@@ -10,6 +10,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import org.apache.logging.log4j.Logger;
 
 @Mod(modid = SimpleChunkloaderMain.MODID, version = SimpleChunkloaderMain.VERSION)
 public class SimpleChunkloaderMain {
@@ -20,9 +21,11 @@ public class SimpleChunkloaderMain {
     @Mod.Instance
     public static SimpleChunkloaderMain simpleChunkloaderMainInstance;
     public static ChunkloadManager chunkloadManager;
+    public static Logger logger;
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        logger = event.getModLog();
         chunkloadManager = new ChunkloadManager();
         ForgeChunkManager.setForcedChunkLoadingCallback(simpleChunkloaderMainInstance, chunkloadManager);
         proxy.preInit(event);

@@ -3,17 +3,14 @@ package com.snackhole.simplechunkloader.commands;
 import com.snackhole.simplechunkloader.SimpleChunkloaderMain;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.ForgeChunkManager;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +31,7 @@ public class CommandChunkload extends CommandBase {
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return "\"/chunkload\" or \"/chunk\" displays a list of existing chunkload tickets by nickname, plus chunkloading limits.  If a nickname already exists, you can add it to the command to get information about it; further add \"release\" to release its chunks and the name.  If a nickname doesn't exist, add it to the command followed by a radius between 0 and 2 to create a new ticket loading chunks in that radius around the chunk you're in.";
+        return "\"/chunkload\" or \"/chunk\" displays a list of existing chunkload tickets by nickname, plus chunkloading limits.  If a nickname already exists, you can add it to the command to get information about it; further add \"release\" to release its chunks and the name.  If a nickname doesn't exist, add it to the command followed by a radius as low as 0 to create a new ticket loading chunks in that radius around the chunk you're in.";
     }
 
     @Override
@@ -57,7 +54,7 @@ public class CommandChunkload extends CommandBase {
             if (ticketMessage.endsWith(":  ")) {
                 ticketMessage += " None; ";
             }
-            ticketMessage += "maximum chunks per ticket:  " + ForgeChunkManager.getMaxChunkDepthFor(SimpleChunkloaderMain.MODID) + "; tickets remaining:  " + (ForgeChunkManager.getMaxTicketLengthFor(SimpleChunkloaderMain.MODID) - SimpleChunkloaderMain.chunkloadManager.getTicketsMap().size());
+            ticketMessage += "maximum radius per ticket:  " + SimpleChunkloaderMain.chunkloadManager.getMaxValidRadiusFromChunks(SimpleChunkloaderMain.chunkloadManager.getMaximumChunksPerTicket()) + "; tickets remaining:  " + SimpleChunkloaderMain.chunkloadManager.getTicketsRemaining();
             player.sendMessage(new TextComponentString(ticketMessage));
         } else if (args.length == 1) {
             ForgeChunkManager.Ticket ticket = ticketsMap.get(args[0]);
@@ -105,6 +102,10 @@ public class CommandChunkload extends CommandBase {
                     player.sendMessage(new TextComponentString("A ticket with that nickname already exists!"));
                     return false;
                 }
+                if (SimpleChunkloaderMain.chunkloadManager.getTicketsRemaining() < 1) {
+                    player.sendMessage(new TextComponentString("No tickets remaining!  Either release tickets or increase tickets available in config."));
+                    return false;
+                }
                 int radius = -1;
                 try {
                     radius = Integer.parseInt(args[1]);
@@ -112,8 +113,9 @@ public class CommandChunkload extends CommandBase {
                     player.sendMessage(new TextComponentString("Radius must be an integer!"));
                     return false;
                 }
-                if (radius < 0 || radius > 2) {
-                    player.sendMessage(new TextComponentString("Radius must be between 0 and 2!"));
+                int maximumRadius = SimpleChunkloaderMain.chunkloadManager.getMaxValidRadiusFromChunks(SimpleChunkloaderMain.chunkloadManager.getMaximumChunksPerTicket());
+                if (radius < 0 || radius > maximumRadius) {
+                    player.sendMessage(new TextComponentString("Radius must be between 0 and " + maximumRadius + "!"));
                     return false;
                 }
             }
